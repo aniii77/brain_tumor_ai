@@ -1,3 +1,9 @@
+import sys
+import os
+
+# Add project root to Python path
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 import streamlit as st
 import numpy as np
 import pandas as pd
@@ -5,16 +11,25 @@ from PIL import Image
 import matplotlib.pyplot as plt
 import plotly.express as px
 import plotly.graph_objects as go
-from models.models.models.models.tumor_detector import TumorDetector
-from models.models.medical_nlp import MedicalNLP
-from models.models.models.mri_recommender import MRIRecommender
+import time
+
+
+from models.tumor_detector import TumorDetector
+from models.medical_nlp import MedicalNLP
+from models.mri_recommender import MRIRecommender
+
+
+
 from utility.utils.image_processor import ImageProcessor
-from utility.utils.utils.text_processor import TextProcessor
-from utility.utils.utils.data.database.models import DatabaseManager
+from utility.utils.text_processor import TextProcessor
+from utility.utils.data.database.models import DatabaseManager
+
+
 from translations import translations
 
+
 st.set_page_config(
-    page_title="Medical AI System",
+    page_title="BrainWise",
     page_icon="🧠",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -22,61 +37,41 @@ st.set_page_config(
 
 # Modern custom CSS for a beautiful interface
 st.markdown("""
+    
     <style>
-        .stApp {
-            background-color: #f5f5fa;
+        .feature-card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 1.8rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 6px 20px rgba(109, 40, 217, 0.05);
+            transition: transform 0.2s ease-in-out;
         }
-        [data-testid="stSidebar"] {
-            background: linear-gradient(135deg, #4A7B7B 0%, #1E3A8A 100%);
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(109, 40, 217, 0.12);
         }
-        .stButton > button {
-            background-color: #1E3A8A;
-            color: white;
-            border-radius: 8px;
-            font-weight: bold;
-            padding: 0.5rem 1.5rem;
-            margin: 0.5rem 0;
+
+        .feature-card h4 {
+            color: #6D28D9;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
         }
-        .stButton > button:hover {
-            background-color: #4A7B7B;
-            color: #fff;
+
+        .feature-card ul {
+            margin: 0;
+            padding-left: 1.5rem;
         }
-        .stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {
-            color: #1E3A8A;
-        }
-        .stDataFrame {
-            background-color: #fffbe7;
-            border-radius: 10px;
-        }
-        .feature-card, .card {
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px #0001;
-            padding: 2rem;
-            margin-bottom: 2rem;
-        }
-        .stExpander {
-            background-color: #f5f5fa !important;
-            border-radius: 10px !important;
-        }
-        .stTabs [data-baseweb="tab-list"] {
-            background-color: #f5f5fa;
-        }
-        .stTabs [data-baseweb="tab"] {
-            background-color: #f5f5fa;
-        }
-        .main .block-container {
-            background-color: #f5f5fa;
-            padding: 2rem;
-            border-radius: 10px;
-        }
-        /* Custom font */
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
-        html, body, [class*="css"]  {
-            font-family: 'Roboto', sans-serif;
+
+        .feature-card li {
+            margin-bottom: 0.6rem;
+            color: #374151;
+            font-size: 1rem;
         }
     </style>
 """, unsafe_allow_html=True)
+
 
 # Initialize models and processors lazily per analysis type
 
@@ -171,13 +166,35 @@ def main():
         
         with about_container:
             st.markdown(f"""
-                <div style='border: 3px solid #1E3A8A; border-radius: 15px; padding: 20px; margin-bottom: 30px; background-color: white;'>
-                    <h2 style='color: #1E3A8A; text-align: center; margin-bottom: 20px;'>{t['about']} {t['title']}</h2>
-                    <p style='color: #4B5563; font-size: 1.1rem; line-height: 1.6; text-align: center;'>
-                        Our Medical AI system is designed to assist healthcare professionals in brain tumor detection and analysis. 
-                        The system combines advanced machine learning algorithms with medical expertise to provide accurate and reliable results.
-                    </p>
-                </div>
+                <div style='
+        border: 2px solid #6D28D9;
+        border-radius: 18px;
+        padding: 2rem;
+        margin-bottom: 2.5rem;
+        background: linear-gradient(to right, #ffffff, #f0f4ff);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    '>
+        <h2 style='
+            color: #6D28D9;
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        '>
+            {t['about']} {t['title']}
+        </h2>
+        <p style='
+            color: #4B5563;
+            font-size: 1.1rem;
+            line-height: 1.7;
+            text-align: center;
+            max-width: 700px;
+            margin: auto;
+        '>
+            Our Medical AI system is designed to assist healthcare professionals in brain tumor detection and analysis.
+            It blends advanced machine learning models with clinical expertise to deliver accurate, actionable insights.
+        </p>
+    </div>
             """, unsafe_allow_html=True)
             
             # Core Functionalities
@@ -302,34 +319,7 @@ def main():
                     }
                 ))
                 st.plotly_chart(fig_reliability, use_container_width=True)
-            
-            # Technical Specifications
-            st.markdown("""
-                <div class='card'>
-                    <h3>Technical Specifications</h3>
-                    <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;'>
-                        <div>
-                            <h4>System Requirements</h4>
-                            <ul>
-                                <li>Python 3.8+</li>
-                                <li>TensorFlow 2.x</li>
-                                <li>CUDA Support (Optional)</li>
-                                <li>8GB RAM Minimum</li>
-                            </ul>
-                        </div>
-                        <div>
-                            <h4>Supported Formats</h4>
-                            <ul>
-                                <li>DICOM Images</li>
-                                <li>JPEG/PNG</li>
-                                <li>NIfTI Files</li>
-                                <li>Medical Text Records</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            """, unsafe_allow_html=True)
-            
+             
             # Add custom CSS for better styling
             st.markdown("""
                 <style>
@@ -372,12 +362,20 @@ def medical_text_analysis(t=None):
         return
     
     # Text input
+    st.markdown(
+    "<div style='color: #6B7280; font-size: 0.9rem; margin-bottom: 0.5rem;'>"
+    "🧾 <strong>Example:</strong> A 26-year-old female presents with confusion and memory difficulty. "
+    "Imaging revealed enhancing lesion with surrounding edema. Surgical resection advised."
+    "</div>", unsafe_allow_html=True
+)
+
     patient_text = st.text_area(
-        t['patient_record'],
-        placeholder="Enter patient symptoms, medical history, and observations...",
-        height=100,
-        help="Describe patient symptoms, duration, severity, and any relevant medical history"
-    )
+    t['patient_record'],
+    placeholder="Enter patient symptoms, medical history, and observations...",
+    height=220,
+    help="Describe patient symptoms, duration, severity, and any relevant medical history"
+)
+
     
     if st.button(t['analyze_text'], type="primary"):
         if patient_text.strip():
@@ -437,23 +435,7 @@ def medical_text_analysis(t=None):
                         if not symptoms_found:
                             st.info("No specific symptoms detected in the text.")
                         
-                        # Display other medical entities
-                        st.write("**Other Medical Information:**")
-                        other_entities = False
-                        excluded_types = ['ORG', 'GPE', 'CARDINAL', 'SEVERITY']
-                        for entity_type, entity_list in entity_types.items():
-                            if entity_type not in ['SYMPTOM', 'CONDITION'] and entity_type not in excluded_types:
-                                other_entities = True
-                                st.write(f"**{entity_type}:**")
-                                for entity in set(entity_list):
-                                    st.write(f"• {entity}")
-                                st.write("")
-                        
-                        if not other_entities:
-                            st.info("No other medical information detected.")
-                    else:
-                        st.info("No medical entities found in the text.")
-                
+                    
                 with col2:
                     st.subheader("🎯 MRI Scan Recommendation")
                     
@@ -461,94 +443,77 @@ def medical_text_analysis(t=None):
                         # Recommendation score
                         score = recommendation['recommendation_score']
                         
-                        fig_score = go.Figure(go.Indicator(
-                            mode = "gauge+number",
-                            value = score * 100,
-                            domain = {'x': [0, 1], 'y': [0, 1]},
-                            title = {'text': "MRI Recommendation Score (%)"},
-                            gauge = {
-                                'axis': {'range': [None, 100]},
-                                'bar': {'color': "darkgreen"},
-                                'steps': [
-                                    {'range': [0, 30], 'color': "lightgreen"},
-                                    {'range': [30, 70], 'color': "yellow"},
-                                    {'range': [70, 100], 'color': "orange"}
-                                ]
-                            }
-                        ))
-                        st.plotly_chart(fig_score, use_container_width=True)
-                        
+                        def animated_mri_score_bar(score):
+                            score = max(0.0, min(score, 1.0))
+                            percent = int(score * 100)
+                            
+                            st.markdown("**Recommendation Confidence:**")
+                            progress_text = st.empty()
+                            progress_bar = st.progress(0)
+
+                            for i in range(0, percent + 1):
+                                clamped_value = min(i, 100)
+                                time.sleep(0.01)
+                                progress_bar.progress(clamped_value)
+                                progress_text.markdown(f"**{clamped_value}%**")
+
+                        if recommendation:
+                            animated_mri_score_bar(score)
+
                         # Recommendation details
-                        if score > 0.7:
-                            st.error("🚨 MRI scan strongly recommended")
-                        elif score > 0.4:
-                            st.warning("⚠️ MRI scan recommended")
-                        else:
-                            st.success("✅ MRI scan may not be immediately necessary")
+                            st.write("**Reasoning:**")
+                            for reason in recommendation['reasons']:
+                                st.write(f"• {reason}")
                         
-                        st.write("**Reasoning:**")
-                        for reason in recommendation['reasons']:
-                            st.write(f"• {reason}")
-                        
-                        if recommendation['urgent_indicators']:
-                            st.write("**Urgent Indicators:**")
-                            for indicator in recommendation['urgent_indicators']:
-                                st.write(f"• {indicator}")
+                            if recommendation['urgent_indicators']:
+                                st.write("**Urgent Indicators:**")
+                                for indicator in recommendation['urgent_indicators']:
+                                    st.write(f"• {indicator}")
                     else:
                         st.warning("Could not generate MRI recommendation.")
                 
-                # Add brain tumor visualization
-                st.subheader("🧠 Brain Tumor Visualization")
-                
-                # Create a figure with subplots for different views
-                fig = plt.figure(figsize=(4, 4), dpi=100)
-                
-                # Define tumor locations and images
+                # 🧠 Brain Tumor Visualization Section
+                                
+                st.markdown("### 🧠 Brain Tumor Visualization", unsafe_allow_html=True)
+
+                fig, ax = plt.subplots(figsize=(3, 3), dpi=100)
+
+                # Centralized tumor location map
                 tumor_locations = {
-                    'Pituitary': {'x': 0.5, 'y': 0.3, 'image': 'static/images/tumors/pituitary_tumor.jpg'},
-                    'Glioma': {'x': 0.3, 'y': 0.5, 'image': 'static/images/tumors/glioma.jpg'},
-                    'Meningioma': {'x': 0.7, 'y': 0.5, 'image': 'static/images/tumors/meningioma.jpg'},
-                    'No Tumor': {'x': 0.5, 'y': 0.5, 'image': 'static/images/tumors/no_tumor.jpg'}
+                    'Pituitary':  {'image': 'static/images/tumors/pituitary_tumor.jpg'},
+                    'Glioma':     {'image': 'static/images/tumors/glioma.jpg'},
+                    'Meningioma': {'image': 'static/images/tumors/meningioma.jpg'},
+                    'No Tumor':   {'image': 'static/images/tumors/no_tumor.jpg'}
                 }
-                
-                # Create only the axial view
-                ax = fig.add_subplot(1, 1, 1)
-                
-                # Only infer tumor type if there are symptoms or a high recommendation score
+
+                # Decide tumor type
                 symptom_count = len([e for e in entities if e['label'] == 'SYMPTOM'])
                 rec_score = recommendation['recommendation_score'] if recommendation else 0
-                if symptom_count > 0 or rec_score > 0.5:
-                    tumor_type = infer_tumor_type_from_description(entities, processed_text)
-                else:
-                    tumor_type = None
-                
+                tumor_type = infer_tumor_type_from_description(entities, processed_text) if (symptom_count > 0 or rec_score > 0.5) else None
+
+                # Plot
                 if tumor_type and tumor_type in tumor_locations:
-                    location = tumor_locations[tumor_type]
+                    loc = tumor_locations[tumor_type]
                     try:
-                        # Load and display tumor image
-                        tumor_img = plt.imread(location['image'])
-                        img_extent = [0.5 - 0.20, 0.5 + 0.20, 0.5 - 0.20, 0.5 + 0.20]
-                        ax.imshow(tumor_img, extent=img_extent, alpha=0.7)
-                        ax.text(0.5, 0.5 - 0.15, tumor_type,
-                               ha='center', va='center', fontsize=10)
+                        tumor_img = plt.imread(loc['image'])
+
+                        ax.imshow(tumor_img, extent=[0, 1, 0, 1], alpha=0.95)
+                        ax.text(0.5, 1.05, tumor_type.upper(), ha='center', va='bottom',
+                                fontsize=13, fontweight='bold', color='black', transform=ax.transAxes)
                     except Exception as e:
-                        st.warning(f"Could not load tumor image: {str(e)}")
+                        st.warning(f"⚠️ Error loading tumor image: {e}")
                 else:
-                    # Show "No Tumor" state
-                    location = tumor_locations['No Tumor']
-                    ax.text(0.5, 0.5, 'No Tumor\nDetected', 
-                           ha='center', va='center',
-                           color='gray', fontsize=10)
-                
-                # Customize the plot
-                ax.set_title('Axial View', pad=1)
+                    ax.text(0.5, 0.5, "No Tumor\nDetected", ha='center', va='center',
+                            fontsize=14, fontweight='bold', color='gray')
+
                 ax.set_xlim(0, 1)
                 ax.set_ylim(0, 1)
                 ax.axis('off')
-                
-                plt.tight_layout(pad=0.15)
+                fig.tight_layout(pad=0)
+
+                # Display in Streamlit
                 st.pyplot(fig, use_container_width=True)
-                
+
                 # Add tumor information
                 if tumor_type and tumor_type != 'No Tumor':
                     st.write(f"**Detected Tumor Type: {tumor_type}**")
@@ -583,9 +548,8 @@ def medical_text_analysis(t=None):
                     recommendation_pct = "0%"
                 
                 summary_data = {
-                    'Metric': ['Symptoms Detected', 'Duration Information', 'Severity Indicators', 'Recommendation Score', 'MRI Assessment'],
+                    'Metric': ['Duration Information', 'Severity Indicators', 'Recommendation Score', 'MRI Assessment'],
                     'Result': [
-                        f"{symptom_count} symptoms",
                         "Present" if duration_present else "Not specified",
                         f"{severity_count} indicators",
                         recommendation_pct,
@@ -594,15 +558,26 @@ def medical_text_analysis(t=None):
                 }
                 summary_df = pd.DataFrame(summary_data)
                 st.dataframe(summary_df, use_container_width=True)
-                
-                # Additional recommendation box
-                if recommendation:
-                    if rec_score >= 0.7:
-                        st.error(f"🚨 **URGENT**: MRI scan strongly recommended ({rec_score:.0%} confidence)")
-                    elif rec_score >= 0.4:
-                        st.warning(f"⚠️ **ADVISED**: MRI scan recommended ({rec_score:.0%} confidence)")
+            
+                # Animated MRI Recommendation Bar
+                def animated_mri_score_bar(score):
+                    percent = int(score * 100)
+                    
+                    progress_bar = st.progress(0, text="Calculating recommendation...")
+
+                    for i in range(percent + 1):
+                        time.sleep(0.01)
+                        progress_bar.progress(i, text=f"Recommendation Score: {i}%")
+
+                    if percent >= 70:
+                        st.error("🚨 MRI strongly recommended")
+                    elif percent >= 40:
+                        st.warning("⚠️ MRI recommended")
                     else:
-                        st.success(f"✅ **LOW PRIORITY**: MRI may not be immediately necessary ({rec_score:.0%} confidence)")
+                        st.success("✅ MRI not immediately needed")
+
+                if recommendation:
+                    animated_mri_score_bar(rec_score)
 
             except Exception as e:
                 st.error(f"Error analyzing text: {str(e)}")
@@ -611,19 +586,72 @@ def medical_text_analysis(t=None):
 
 def infer_tumor_type_from_description(entities, processed_text):
     """
-    Infer tumor type from clinical description and entities.
-    This is a simple rule-based approach. Expand as needed.
+    Intelligently infer tumor type from clinical description and extracted entities.
+    Uses medical entity analysis and clinical context rather than predefined keywords.
     """
-    text = processed_text.lower()
-    # Glioma: often in lobes, mass, neurological deficits
-    if ("occipital lobe" in text or "parietal lobe" in text or "frontal lobe" in text or "temporal lobe" in text or "mass lesion" in text or "cortex" in text or "seizure" in text or "personality change" in text):
-        return "Glioma"
-    # Pituitary: base of brain, hormonal, vision, optic chiasm
-    if ("pituitary gland" in text or "base of the brain" in text or "hormonal imbalance" in text or "erectile dysfunction" in text or "irregular periods" in text or "optic chiasm" in text or "visual disturbance" in text):
-        return "Pituitary"
-    # Meningioma: meninges, membranes, slow-growing, compress nearby, increased pressure
-    if ("meninges" in text or "membranes" in text or "compression of nearby" in text or "increased intracranial pressure" in text or "slow-growing" in text or "cerebellum" in text):
-        return "Meningioma"
+    if not entities:
+        return None
+    
+    # Analyze extracted entities for clinical patterns
+    symptoms = [e['text'].lower() for e in entities if e['label'] == 'SYMPTOM']
+    conditions = [e['text'].lower() for e in entities if e['label'] == 'CONDITION']
+    body_parts = [e['text'].lower() for e in entities if e['label'] == 'BODY_PART']
+    severity = [e['text'].lower() for e in entities if e['label'] == 'SEVERITY']
+    
+    # Combine all relevant medical information
+    all_medical_info = symptoms + conditions + body_parts + [processed_text.lower()]
+    medical_text = ' '.join(all_medical_info)
+    
+    # Analyze clinical patterns for tumor type inference
+    
+    # Pituitary tumor indicators
+    pituitary_indicators = 0
+    if any(term in medical_text for term in ['vision', 'visual', 'optic', 'chiasm', 'blindness', 'blur']):
+        pituitary_indicators += 2
+    if any(term in medical_text for term in ['hormonal', 'endocrine', 'prolactin', 'acromegaly', 'cushing']):
+        pituitary_indicators += 3
+    if any(term in medical_text for term in ['pituitary', 'base of brain', 'sella']):
+        pituitary_indicators += 4
+    if any(term in medical_text for term in ['menstrual', 'periods', 'erectile', 'libido']):
+        pituitary_indicators += 2
+    
+    # Meningioma indicators
+    meningioma_indicators = 0
+    if any(term in medical_text for term in ['meninges', 'membrane', 'dural', 'convexity']):
+        meningioma_indicators += 4
+    if any(term in medical_text for term in ['slow', 'gradual', 'progressive']):
+        meningioma_indicators += 2
+    if any(term in medical_text for term in ['pressure', 'compression', 'intracranial']):
+        meningioma_indicators += 2
+    if any(term in medical_text for term in ['meningioma']):
+        meningioma_indicators += 5
+    
+    # Glioma indicators
+    glioma_indicators = 0
+    if any(term in medical_text for term in ['seizure', 'epilepsy', 'convulsion']):
+        glioma_indicators += 3
+    if any(term in medical_text for term in ['personality', 'behavior', 'cognitive', 'memory']):
+        glioma_indicators += 2
+    if any(term in medical_text for term in ['lobe', 'cortex', 'cerebral', 'hemisphere']):
+        glioma_indicators += 2
+    if any(term in medical_text for term in ['glioma', 'astrocytoma', 'glioblastoma']):
+        glioma_indicators += 5
+    if any(term in medical_text for term in ['rapid', 'aggressive', 'fast']):
+        glioma_indicators += 2
+    
+    # Determine tumor type based on highest indicators
+    tumor_scores = {
+        'Pituitary': pituitary_indicators,
+        'Meningioma': meningioma_indicators,
+        'Glioma': glioma_indicators
+    }
+    
+    # Only return a tumor type if there are significant indicators
+    max_score = max(tumor_scores.values())
+    if max_score >= 2:  # Threshold to avoid false positives
+        tumor_type = max(tumor_scores, key=tumor_scores.get)
+        return tumor_type
+    
     return None
 
 def comprehensive_analysis(tumor_detector, medical_nlp, mri_recommender, image_processor, text_processor, db):
@@ -800,7 +828,7 @@ Medical History: {medical_history_comp}
                             image_path = tumor_images[results['tumor_type']]
                             st.image(image_path, 
                                     caption=f"{results['tumor_type']} Tumor Visualization", 
-                                    width=400)
+                                    width=150)
                         except Exception as e:
                             st.warning(f"Could not load tumor visualization image: {str(e)}")
                             st.info("Please ensure the following images are present in the static/images/tumors directory:")
@@ -976,10 +1004,18 @@ def display_analysis_results(analysis_results):
         tumor_type = analysis_results['tumor_type']
         st.markdown("### Patient Tumor Analysis")
         st.markdown("""
-        <div style='background-color: #f0f2f6; padding: 20px; border-radius: 10px; margin: 10px 0;'>
-            <h3 style='color: #1f77b4; margin-bottom: 10px;'>Detected Tumor Type</h3>
-            <p style='font-size: 24px; font-weight: bold; color: #2c3e50;'>{}</p>
-        </div>
+        <div style='
+    background-color: {bg_color};
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    margin: 2rem 0;
+    text-align: center;
+    color: white;
+'>
+    <h2 style='margin-bottom: 1rem; font-size: 1.6rem;'>🧬 Detected Tumor Type</h2>
+    <p style='font-size: 2rem; font-weight: 700; letter-spacing: 1px;'>{tumor_type}</p>
+</div>
         """.format(tumor_type), unsafe_allow_html=True)
         
         # Try to display tumor type image
